@@ -118,21 +118,26 @@ int main()
     sprintf(shmid2str, "%d", shmid2);
     sprintf(shmid3str, "%d", shmid3);
 
+    // pass number of processes for now
+    char strk[10];
+    sprintf(strk, "%d", k);
+
     // create Scheduler process, pass msgid1str and msgid2str
     int pidscheduler = fork();
     if (pidscheduler == 0)
     {
-        execlp("./sched", "./sched", msgid1str, msgid2str, NULL);
+        execlp("./sched", "./sched", msgid1str, msgid2str, strk, NULL);
     }
 
     // create Memory Management Unit process, pass msgid2str and msgid3str, shmid1str and shmid2str
     int pidmmu = fork();
     if (pidmmu == 0)
     {
-        execlp("./mmu", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
+        execlp("xterm", "xterm", "-T", "Memory Management Unit", "-e", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
     }
 
-    char **ref = (char **)malloc(k * sizeof(char *));
+    int **refi = (int **)malloc((k) * sizeof(int *));
+    char **refstr = (char **)malloc((k) * sizeof(char *));
 
     // initialize the Processes
     for (int i = 0; i < k; i++)
@@ -145,25 +150,47 @@ int main()
             sm1[i].pagetable[j][0] = -1; // no frame allocated
             sm1[i].pagetable[j][1] = 0;  // invalid
         }
-        int x = rand() % (8 * sm1[i].mi + 1) + 2 * sm1[i].mi;
 
-        ref[i] = (char *)malloc((x + 1) * sizeof(char));
+        int y = 0;
+        int x = rand() % (8 * sm1[i].mi + 1) + 2 * sm1[i].mi;
 
         for (int j = 0; j < x; j++)
         {
-            ref[i][j] = rand() % sm1[i].mi;
+            refi[i] = (int *)malloc(x * sizeof(int));
         }
 
-        ref[i][x] = '\0';
+        for (int j = 0; j < x; j++)
+        {
+            refi[i][j] = rand() % sm1[i].mi;
+            int temp = refi[i][j];
+            while (temp > 0)
+            {
+                temp /= 10;
+                y++;
+            }
+            y++;
+        }
+        y++;
 
         // with probability PROB, corrupt the reference string, by putting illegal page number
         for (int j = 0; j < x; j++)
         {
             if ((double)rand() / RAND_MAX < PROB)
             {
-                ref[i][j] = rand() % m;
+                refi[i][j] = rand() % m;
             }
         }
+
+        refstr[i] = (char *)malloc(y * sizeof(char));
+        memset(refstr[i], '\0', y);
+
+        for (int j = 0; j < x; j++)
+        {
+            char temp[12] = {'\0'};
+            sprintf(temp, "%d.", refi[i][j]);
+            strcat(refstr[i], temp);
+        }
+
     }
 
     // create Processes
@@ -178,7 +205,7 @@ int main()
         else
         {
             // pass ref[i], msgid1str, msgid3str
-            execlp("./process", "./process", ref[i], msgid1str, msgid3str, NULL);
+            execlp("./process", "./process", refstr[i], msgid1str, msgid3str, NULL);
         }
     }
 
