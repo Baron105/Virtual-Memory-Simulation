@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <limits.h>
 
 #define P(s) semop(s, &pop, 1)
 #define V(s) semop(s, &vop, 1)
@@ -19,6 +20,8 @@ typedef struct SM1
     int mi;          // number of required pages
     int fi;          // number of frames allocated
     int **pagetable; // page table
+    int totalpagefaults;
+    int totalillegalaccess;
 } SM1;
 typedef struct message2
 {
@@ -164,11 +167,11 @@ int main(int argc, char *argv[])
                 }
 
                 
-                sm[i].pagetable[minpage][1] = 0;
-                sm[i].pagetable[page][0] = sm[i].pagetable[minpage][0];
-                sm[i].pagetable[page][1] = 1;
-                sm[i].pagetable[page][2] = timestamp;
-                sm[i].pagetable[minpage][2] = INT_MAX;
+                sm1[i].pagetable[minpage][1] = 0;
+                sm1[i].pagetable[page][0] = sm1[i].pagetable[minpage][0];
+                sm1[i].pagetable[page][1] = 1;
+                sm1[i].pagetable[page][2] = timestamp;
+                sm1[i].pagetable[minpage][2] = INT_MAX;
 
 
                 msg2.type = 1;

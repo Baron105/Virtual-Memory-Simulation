@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     message1 msg1;
     message2 msg2;
 
-    while(k > 0)
+    while (k > 0)
     {
         // wait for processes to come
         msgrcv(msgid1, (void *)&msg1, sizeof(message1), 0, 0);
@@ -79,9 +79,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    
     printf("\t\tScheduler terminated\n");
-    
+
     // signal master on semid4
     V(semid4);
 

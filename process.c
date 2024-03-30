@@ -28,6 +28,9 @@ typedef struct message3
 
 int main(int argc, char *argv[])
 {
+
+    printf("Process has started\n");
+    
     struct sembuf pop = {0, -1, 0};
     struct sembuf vop = {0, 1, 0};
 
@@ -37,11 +40,13 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+
     int msgid1 = atoi(argv[2]);
     int msgid3 = atoi(argv[3]);
 
-    char *refstr;
+    char refstr[100000] = {'\0'};
     strcpy(refstr, argv[1]);
+    printf("%s\n", refstr);
 
     key_t key = ftok("master.c", 4);
     int semid = semget(key, 1, IPC_CREAT | 0666);
@@ -54,20 +59,21 @@ int main(int argc, char *argv[])
 
     // send pid to ready queue
     msgsnd(msgid1, (void *)&msg1, sizeof(message1), 0);
+    printf("Process %d: ", pid);
 
     // wait till scheduler signals to start
     P(semid);
 
     // send the reference string to the scheduler, one character at a time
     int i = 0;
-    while(refstr[i] != '\0')
+    while (refstr[i] != '\0')
     {
         message3 msg3;
         msg3.type = 1;
         msg3.pid = pid;
         int j = 0;
         // extract the page number from the reference string going character by character
-        while(refstr[i] != '.' && refstr[i] != '\0')
+        while (refstr[i] != '.' && refstr[i] != '\0')
         {
             j = j * 10 + (refstr[i] - '0');
             i++;

@@ -16,6 +16,20 @@
 #define P(s) semop(s, &pop, 1)
 #define V(s) semop(s, &vop, 1)
 
+int pidscheduler;
+int pidmmu;
+
+void sighand(int signum)
+{
+    if(signum == SIGINT)
+    {
+        // kill scheduler,mmu and all the processes
+        kill(pidscheduler,SIGINT);
+        kill(pidmmu,SIGINT);
+        exit(1);
+    }
+}
+
 typedef struct SM1
 {
     int pid;         // process id
@@ -44,7 +58,7 @@ int main()
     // page table for k processes
     key_t key = ftok("master.c", 1);
     int shmid1 = shmget(key, k * sizeof(SM1), IPC_CREAT | 0666);
-    SM1 *sm1 = (SM1 *)shmat(shmid, NULL, 0);
+    SM1 *sm1 = (SM1 *)shmat(shmid1, NULL, 0);
 
     for (int i = 0; i < k; i++)
     {
@@ -58,7 +72,7 @@ int main()
     }
 
     // free frames list
-    key = ftok("master.c", 2);
+    key = ftok("master.c", 20);
     int shmid2 = shmget(key, (f + 1) * sizeof(int), IPC_CREAT | 0666);
     int *sm2 = (int *)shmat(shmid2, NULL, 0);
 
@@ -66,6 +80,7 @@ int main()
     for (int i = 0; i < f; i++)
     {
         sm2[i] = 1;
+        printf("CHECk\n");
     }
     sm2[f] = -1;
 
@@ -83,22 +98,22 @@ int main()
     // semaphore 1 for Processes
     key = ftok("master.c", 4);
     int semid1 = semget(key, 1, IPC_CREAT | 0666);
-    semctl(semid, 0, SETVAL, 0);
+    semctl(semid1, 0, SETVAL, 0);
 
     // semaphore 2 for Scheduler
     key = ftok("master.c", 5);
     int semid2 = semget(key, 1, IPC_CREAT | 0666);
-    semctl(semid, 0, SETVAL, 0);
+    semctl(semid2, 0, SETVAL, 0);
 
     // semaphore 3 for Memory Management Unit
     key = ftok("master.c", 6);
     int semid3 = semget(key, 1, IPC_CREAT | 0666);
-    semctl(semid, 0, SETVAL, 0);
+    semctl(semid3, 0, SETVAL, 0);
 
     // semaphore 4 for Master
     key = ftok("master.c", 7);
     int semid4 = semget(key, 1, IPC_CREAT | 0666);
-    semctl(semid, 0, SETVAL, 0);
+    semctl(semid4, 0, SETVAL, 0);
 
     // Message Queue 1 for Ready Queue
     key = ftok("master.c", 8);
@@ -125,21 +140,22 @@ int main()
     sprintf(shmid3str, "%d", shmid3);
 
     // pass number of processes for now
-    char strk[10];
+    char strk[10000] = {'\0'};
     sprintf(strk, "%d", k);
 
     // create Scheduler process, pass msgid1str and msgid2str
-    int pidscheduler = fork();
+    pidscheduler = fork();
     if (pidscheduler == 0)
     {
         execlp("./sched", "./sched", msgid1str, msgid2str, strk, NULL);
     }
 
     // create Memory Management Unit process, pass msgid2str and msgid3str, shmid1str and shmid2str
-    int pidmmu = fork();
+    pidmmu = fork();
     if (pidmmu == 0)
     {
-        execlp("xterm", "xterm", "-T", "Memory Management Unit", "-e", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
+        // execlp("xterm", "xterm", "-T", "Memory Management Unit", "-e", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
+        execlp("./mmu", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
     }
 
     int **refi = (int **)malloc((k) * sizeof(int *));
@@ -153,15 +169,18 @@ int main()
         sm1[i].fi = 0;
         for (int j = 0; j < m; j++)
         {
-            sm1[i].pagetable[j][0] = -1;        // no frame allocated
-            sm1[i].pagetable[j][1] = 0;         // invalid
-            sm1[i].pagetable[j][2] = INT_MAX;   // timestamp
+            sm1[i].pagetable[j][0] = -1;      // no frame allocated
+            sm1[i].pagetable[j][1] = 0;       // invalid
+            sm1[i].pagetable[j][2] = INT_MAX; // timestamp
         }
 
         int y = 0;
         int x = rand() % (8 * sm1[i].mi + 1) + 2 * sm1[i].mi;
 
-        refi[i] = (int *)malloc(x * sizeof(int));
+        for (int j = 0; j < x; j++)
+        {
+            refi[i] = (int *)malloc(x * sizeof(int));
+        }
 
         for (int j = 0; j < x; j++)
         {
@@ -190,11 +209,10 @@ int main()
 
         for (int j = 0; j < x; j++)
         {
-            char temp[12] = {'\0'};
+            char temp[100] = {'\0'};
             sprintf(temp, "%d.", refi[i][j]);
             strcat(refstr[i], temp);
         }
-
     }
 
     // create Processes
