@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 
 #define PROB 0.1
@@ -21,6 +22,8 @@ typedef struct SM1
     int mi;          // number of required pages
     int fi;          // number of frames allocated
     int **pagetable; // page table
+    int totalpagefaults;
+    int totalillegalaccess;
 } SM1;
 
 int main()
@@ -48,20 +51,23 @@ int main()
         sm1[i].pagetable = (int **)malloc(m * sizeof(int *));
         for (int j = 0; j < m; j++)
         {
-            sm1[i].pagetable[j] = (int *)malloc(2 * sizeof(int));
+            sm1[i].pagetable[j] = (int *)malloc(3 * sizeof(int));
         }
+        sm1[i].totalpagefaults = 0;
+        sm1[i].totalillegalaccess = 0;
     }
 
     // free frames list
     key = ftok("master.c", 2);
-    int shmid2 = shmget(key, f * sizeof(int), IPC_CREAT | 0666);
+    int shmid2 = shmget(key, (f + 1) * sizeof(int), IPC_CREAT | 0666);
     int *sm2 = (int *)shmat(shmid2, NULL, 0);
 
-    // initialize the frames, 1 means free, 0 means occupied
+    // initialize the frames, 1 means free, 0 means occupied, -1 means end of list
     for (int i = 0; i < f; i++)
     {
         sm2[i] = 1;
     }
+    sm2[f] = -1;
 
     // process to page mapping
     key = ftok("master.c", 3);
@@ -147,17 +153,15 @@ int main()
         sm1[i].fi = 0;
         for (int j = 0; j < m; j++)
         {
-            sm1[i].pagetable[j][0] = -1; // no frame allocated
-            sm1[i].pagetable[j][1] = 0;  // invalid
+            sm1[i].pagetable[j][0] = -1;        // no frame allocated
+            sm1[i].pagetable[j][1] = 0;         // invalid
+            sm1[i].pagetable[j][2] = INT_MAX;   // timestamp
         }
 
         int y = 0;
         int x = rand() % (8 * sm1[i].mi + 1) + 2 * sm1[i].mi;
 
-        for (int j = 0; j < x; j++)
-        {
-            refi[i] = (int *)malloc(x * sizeof(int));
-        }
+        refi[i] = (int *)malloc(x * sizeof(int));
 
         for (int j = 0; j < x; j++)
         {
