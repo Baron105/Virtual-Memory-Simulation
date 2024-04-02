@@ -17,6 +17,7 @@ typedef struct message1
 {
     long type;
     int pid;
+    int semid;
 } message1;
 
 typedef struct message3
@@ -24,11 +25,11 @@ typedef struct message3
     long type;
     int pageorframe;
     int pid;
+    int semid;
 } message3;
 
 int main(int argc, char *argv[])
 {
-
     printf("Process has started\n");
     
     struct sembuf pop = {0, -1, 0};
@@ -46,23 +47,33 @@ int main(int argc, char *argv[])
 
     char refstr[100000] = {'\0'};
     strcpy(refstr, argv[1]);
-    printf("%s\n", refstr);
+    printf("%s   pid=%d\n", refstr,getpid());
 
     key_t key = ftok("master.c", 4);
     int semid = semget(key, 1, IPC_CREAT | 0666);
+
+    key = ftok("master.c", 6);
+    int semid3 = semget(key, 1, IPC_CREAT | 0666);
+
+    // generate a random key for the process
+    key = ftok("process.c", getpid() % 255);
+    int semaphoreid = semget(key, 1, IPC_CREAT | 0666);
+    
 
     int pid = getpid();
 
     message1 msg1;
     msg1.type = 1;
     msg1.pid = pid;
+    msg1.semid = semaphoreid;
 
     // send pid to ready queue
     msgsnd(msgid1, (void *)&msg1, sizeof(message1), 0);
-    printf("Process %d: ", pid);
 
     // wait till scheduler signals to start
-    P(semid);
+    printf("pid = %d\n", pid);
+    P(semaphoreid);
+    printf("Process %d: Started with semaphore id =%d\n", pid, semaphoreid);
 
     // send the reference string to the scheduler, one character at a time
     int i = 0;
@@ -71,20 +82,27 @@ int main(int argc, char *argv[])
         message3 msg3;
         msg3.type = 1;
         msg3.pid = pid;
+        msg3.semid = semaphoreid;
         int j = 0;
+        char temp[10] = {'\0'};
+        int k = 0;
         // extract the page number from the reference string going character by character
+        int x = i;
         while (refstr[i] != '.' && refstr[i] != '\0')
         {
-            j = j * 10 + (refstr[i] - '0');
+            temp[k] = refstr[i];
+            k++;
             i++;
         }
+        j = atoi(temp);
+        printf("process id = %d, page number = %d\n", pid, j);
         i++;
         msg3.pageorframe = j;
         msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
-
+        P(semid3);
         // wait for the mmu to allocate the frame
         msgrcv(msgid3, (void *)&msg3, sizeof(message3), 0, 0);
-
+        V(semid3);
         // check the validity of the frame number
         if (msg3.pageorframe == -2)
         {
@@ -98,7 +116,8 @@ int main(int argc, char *argv[])
             printf("Page Fault\nWaiting for page to be loaded\n");
             // wait for the page to be loaded
             // scheduler will signal when the page is loaded
-            P(semid);
+            i=x;
+            P(semaphoreid);
             continue;
         }
         else
@@ -115,9 +134,13 @@ int main(int argc, char *argv[])
     msg3.type = 1;
     msg3.pid = pid;
     msg3.pageorframe = -9;
+    msg3.semid = semaphoreid;
 
     msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
     printf("Terminating\n");
+
+    // delete the semaphore
+    semctl(semaphoreid, 0, IPC_RMID);   
 
     return 0;
 }

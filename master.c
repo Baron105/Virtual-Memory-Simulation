@@ -10,6 +10,7 @@
 #include <string.h>
 #include <limits.h>
 #include <time.h>
+#include <signal.h>
 
 #define PROB 0.1
 
@@ -35,7 +36,7 @@ typedef struct SM1
     int pid;         // process id
     int mi;          // number of required pages
     int fi;          // number of frames allocated
-    int **pagetable; // page table
+    int pagetable[50000][3]; // page table
     int totalpagefaults;
     int totalillegalaccess;
 } SM1;
@@ -43,30 +44,38 @@ typedef struct SM1
 int main()
 {
     srand(time(0));
-
     struct sembuf pop = {0, -1, 0};
     struct sembuf vop = {0, 1, 0};
 
     int k, m, f;
-    printf("Enter the number of processes: ");
-    scanf("%d", &k);
-    printf("Enter the Virtual Address Space size: ");
-    scanf("%d", &m);
-    printf("Enter the Physical Address Space size: ");
-    scanf("%d", &f);
+    // printf("Enter the number of processes: ");
+    // scanf("%d", &k);
+    // printf("Enter the Virtual Address Space size: ");
+    // scanf("%d", &m);
+    // printf("Enter the Physical Address Space size: ");
+    // scanf("%d", &f);
+
+    k=4;m=4;f=10;
 
     // page table for k processes
     key_t key = ftok("master.c", 1);
     int shmid1 = shmget(key, k * sizeof(SM1), IPC_CREAT | 0666);
+    shmctl(shmid1, IPC_RMID, NULL);
+    shmid1 = shmget(key, k * sizeof(SM1), IPC_CREAT | 0666);
     SM1 *sm1 = (SM1 *)shmat(shmid1, NULL, 0);
+    void * t = (void *)sm1;
+
+
+    // check if shared memory is attached
+    if (t == (void *)-1)
+    {
+        perror("shmat");
+        exit(1);
+    }
+
 
     for (int i = 0; i < k; i++)
     {
-        sm1[i].pagetable = (int **)malloc(m * sizeof(int *));
-        for (int j = 0; j < m; j++)
-        {
-            sm1[i].pagetable[j] = (int *)malloc(3 * sizeof(int));
-        }
         sm1[i].totalpagefaults = 0;
         sm1[i].totalillegalaccess = 0;
     }
@@ -80,13 +89,14 @@ int main()
     for (int i = 0; i < f; i++)
     {
         sm2[i] = 1;
-        printf("CHECk\n");
     }
     sm2[f] = -1;
 
     // process to page mapping
     key = ftok("master.c", 3);
     int shmid3 = shmget(key, k * sizeof(int), IPC_CREAT | 0666);
+    shmctl(shmid3, IPC_RMID, NULL);
+    shmid3 = shmget(key, k * sizeof(int), IPC_CREAT | 0666);
     int *sm3 = (int *)shmat(shmid3, NULL, 0);
 
     // initially no frames are allocated to any process
@@ -118,14 +128,20 @@ int main()
     // Message Queue 1 for Ready Queue
     key = ftok("master.c", 8);
     int msgid1 = msgget(key, IPC_CREAT | 0666);
+    msgctl(msgid1, IPC_RMID, NULL);
+    msgid1 = msgget(key, IPC_CREAT | 0666);
 
     // Message Queue 2 for Scheduler
     key = ftok("master.c", 9);
     int msgid2 = msgget(key, IPC_CREAT | 0666);
+    msgctl(msgid2, IPC_RMID, NULL);
+    msgid2 = msgget(key, IPC_CREAT | 0666);
 
     // Message Queue 3 for Memory Management Unit
     key = ftok("master.c", 10);
     int msgid3 = msgget(key, IPC_CREAT | 0666);
+    msgctl(msgid3, IPC_RMID, NULL);
+    msgid3 = msgget(key, IPC_CREAT | 0666);
 
     // convert msgid to string
     char msgid1str[10], msgid2str[10], msgid3str[10];
@@ -158,8 +174,8 @@ int main()
         execlp("./mmu", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
     }
 
-    int **refi = (int **)malloc((k) * sizeof(int *));
-    char **refstr = (char **)malloc((k) * sizeof(char *));
+    int **refi = (int **)malloc((k + 1) * sizeof(int *));
+    char **refstr = (char **)malloc((k + 1) * sizeof(char *));
 
     // initialize the Processes
     for (int i = 0; i < k; i++)
@@ -179,7 +195,7 @@ int main()
 
         for (int j = 0; j < x; j++)
         {
-            refi[i] = (int *)malloc(x * sizeof(int));
+            refi[i] = (int *)malloc((x + 1) * sizeof(int));
         }
 
         for (int j = 0; j < x; j++)
@@ -193,7 +209,7 @@ int main()
             }
             y++;
         }
-        y++;
+        // y++;
 
         // with probability PROB, corrupt the reference string, by putting illegal page number
         for (int j = 0; j < x; j++)
@@ -218,21 +234,26 @@ int main()
     // create Processes
     for (int i = 0; i < k; i++)
     {
-        usleep(250000);
         int pid = fork();
         if (pid != 0)
         {
             sm1[i].pid = pid;
+            printf("Process %d created :: mi = %d\n", pid, sm1[i].mi);
         }
         else
         {
+            usleep(250000);
             // pass ref[i], msgid1str, msgid3str
+            printf("refstr[%d] = %s\n", i, refstr[i]);
+
             execlp("./process", "./process", refstr[i], msgid1str, msgid3str, NULL);
         }
     }
 
     // wait for Scheduler to signal
     P(semid4);
+
+    // sleep(2000);
 
     // terminate Scheduler
     kill(pidscheduler, SIGINT);

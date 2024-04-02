@@ -17,12 +17,14 @@ typedef struct message1
 {
     long type;
     int pid;
+    int semid;
 } message1;
 
 typedef struct message2
 {
     long type;
     int pid;
+    int semid;
 } message2;
 
 int main(int argc, char *argv[])
@@ -59,7 +61,8 @@ int main(int argc, char *argv[])
         printf("\t\tScheduling process %d\n", msg1.pid);
 
         // signal process to start
-        V(semid);
+        printf("\t\t secheduler signaling process %d and semid = %d\n", msg1.pid, msg1.semid);
+        V(msg1.semid);
 
         // wait for mmu
         msgrcv(msgid2, (void *)&msg2, sizeof(message2), 0, 0);
@@ -74,6 +77,7 @@ int main(int argc, char *argv[])
         {
             printf("\t\tProcess %d added to end of queue\n", msg2.pid);
             msg1.pid = msg2.pid;
+            msg1.semid = msg2.semid;
             msg1.type = 1;
             msgsnd(msgid1, (void *)&msg1, sizeof(message1), 0);
         }
