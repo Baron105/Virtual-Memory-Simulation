@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     while (refstr[i] != '\0')
     {
         message3 msg3;
-        msg3.type = 1;
+        msg3.type = 3;
         msg3.pid = pid;
         msg3.semid = semaphoreid;
         int j = 0;
@@ -99,10 +99,10 @@ int main(int argc, char *argv[])
         i++;
         msg3.pageorframe = j;
         msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
-        P(semid3);
+        // P(semid3);
         // wait for the mmu to allocate the frame
-        msgrcv(msgid3, (void *)&msg3, sizeof(message3), 0, 0);
-        V(semid3);
+        msgrcv(msgid3, (void *)&msg3, sizeof(message3), 4, 0);
+        // V(semid3);
         // check the validity of the frame number
         if (msg3.pageorframe == -2)
         {
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     printf("Process %d: ", pid);
     printf("Got all frames properly\n");
     message3 msg3;
-    msg3.type = 1;
+    msg3.type = 3;
     msg3.pid = pid;
     msg3.pageorframe = -9;
     msg3.semid = semaphoreid;

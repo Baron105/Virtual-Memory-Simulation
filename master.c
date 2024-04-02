@@ -55,7 +55,7 @@ int main()
     // printf("Enter the Physical Address Space size: ");
     // scanf("%d", &f);
 
-    k=4;m=4;f=10;
+    k=3;m=3;f=6;
 
     // page table for k processes
     key_t key = ftok("master.c", 1);
@@ -174,8 +174,8 @@ int main()
         execlp("./mmu", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
     }
 
-    int **refi = (int **)malloc((k + 1) * sizeof(int *));
-    char **refstr = (char **)malloc((k + 1) * sizeof(char *));
+    int refi[1000][1000];
+    char refstr[1000][4000];
 
     // initialize the Processes
     for (int i = 0; i < k; i++)
@@ -193,21 +193,12 @@ int main()
         int y = 0;
         int x = rand() % (8 * sm1[i].mi + 1) + 2 * sm1[i].mi;
 
-        for (int j = 0; j < x; j++)
-        {
-            refi[i] = (int *)malloc((x + 1) * sizeof(int));
-        }
+
+        // refi[i] = (int *)malloc((x + 1) * sizeof(int));
 
         for (int j = 0; j < x; j++)
         {
             refi[i][j] = rand() % sm1[i].mi;
-            int temp = refi[i][j];
-            while (temp > 0)
-            {
-                temp /= 10;
-                y++;
-            }
-            y++;
         }
         // y++;
 
@@ -218,10 +209,21 @@ int main()
             {
                 refi[i][j] = rand() % m;
             }
+            int temp = refi[i][j];
+            while (temp > 0)
+            {
+                temp /= 10;
+                y++;
+            }
+            y++;
         }
 
-        refstr[i] = (char *)malloc(y * sizeof(char));
-        memset(refstr[i], '\0', y);
+        // refstr[i] = (char *)malloc(y * sizeof(char));
+        // memset(refstr, '\0', y);
+        for (int j = 0; j < 4000; j++)
+        {
+            refstr[i][j] = '\0';
+        }
 
         for (int j = 0; j < x; j++)
         {
@@ -239,12 +241,18 @@ int main()
         {
             sm1[i].pid = pid;
             printf("Process %d created :: mi = %d\n", pid, sm1[i].mi);
+            printf("Reference String[%d] = %s\n", i, refstr[i]);
+            printf("\n");
         }
         else
         {
             usleep(250000);
             // pass ref[i], msgid1str, msgid3str
-            printf("refstr[%d] = %s\n", i, refstr[i]);
+            // printf("refstr[%d] =",i);
+            // for (int j = 0; refstr[i][j] != '\0'; j++)
+            // {
+            //     printf("%c", refstr[i][j]);
+            // }
 
             execlp("./process", "./process", refstr[i], msgid1str, msgid3str, NULL);
         }
@@ -262,13 +270,13 @@ int main()
     kill(pidmmu, SIGINT);
 
     // detach and remove shared memory
-    shmdt(sm1);
+    // shmdt(sm1);
     shmctl(shmid1, IPC_RMID, NULL);
 
-    shmdt(sm2);
+    // shmdt(sm2);
     shmctl(shmid2, IPC_RMID, NULL);
 
-    shmdt(sm3);
+    // shmdt(sm3);
     shmctl(shmid3, IPC_RMID, NULL);
 
     // remove semaphores

@@ -56,6 +56,7 @@ int main(int argc, char *argv[])
     while (k > 0)
     {
         // wait for processes to come
+        // usleep(2500);
         msgrcv(msgid1, (void *)&msg1, sizeof(message1), 0, 0);
 
         printf("\t\tScheduling process %d\n", msg1.pid);

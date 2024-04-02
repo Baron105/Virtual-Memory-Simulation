@@ -72,12 +72,12 @@ int main(int argc, char *argv[])
     while (1)
     {
         // wait for process to come
-        msgrcv(msgid3, (void *)&msg3, sizeof(message3), 0, 0);
+        msgrcv(msgid3, (void *)&msg3, sizeof(message3), 3, 0);
         timestamp++;
 
 
         printf("Global Ordering - (Timestamp %d, Process %d, Page %d)\n", timestamp, msg3.pid, msg3.pageorframe);
-        V(semid3);
+        // V(semid3);
         // check if the requested page is in the page table of the process with that pid
         int i = 0;
         while (sm1[i].pid != msg3.pid)
@@ -111,6 +111,7 @@ int main(int argc, char *argv[])
             // page there in memory and valid, return frame number
             sm1[i].pagetable[page][2] = timestamp;
             msg3.pageorframe = sm1[i].pagetable[page][0];
+            msg3.type = 4;
             msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
         }
         else if(page >= sm1[i].mi)
@@ -118,6 +119,7 @@ int main(int argc, char *argv[])
             // illegal page number
             // ask process to kill themselves
             msg3.pageorframe = -2;
+            msg3.type = 4;
             msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
 
             // update total illegal access
@@ -147,6 +149,7 @@ int main(int argc, char *argv[])
             // ask process to wait
             printf("Page fault sequence - (Process %d, Page %d)\n", i + 1, page);
             msg3.pageorframe = -1;
+            msg3.type = 4;
             msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
 
 
@@ -206,6 +209,6 @@ int main(int argc, char *argv[])
                 msgsnd(msgid2, (void *)&msg2, sizeof(message2), 0);
             }
         }
-        P(semid3);
+        // P(semid3);
     }
 }
