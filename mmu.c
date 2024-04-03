@@ -66,8 +66,8 @@ int main(int argc, char *argv[])
     SM1 *sm1 = (SM1 *)shmat(shmid1, NULL, 0);
     int *sm2 = (int *)shmat(shmid2, NULL, 0);
 
-    key_t key = ftok("master.c", 6);
-    int semid3 = semget(key, 1, IPC_CREAT | 0666);
+    // key_t key = ftok("master.c", 6);
+    // int semid3 = semget(key, 1, IPC_CREAT | 0666);
 
     while (1)
     {

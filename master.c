@@ -55,7 +55,7 @@ int main()
     // printf("Enter the Physical Address Space size: ");
     // scanf("%d", &f);
 
-    k=3;m=3;f=6;
+    k=4;m=7;f=10;
 
     // page table for k processes
     key_t key = ftok("master.c", 1);
@@ -105,20 +105,6 @@ int main()
         sm3[i] = 0;
     }
 
-    // semaphore 1 for Processes
-    key = ftok("master.c", 4);
-    int semid1 = semget(key, 1, IPC_CREAT | 0666);
-    semctl(semid1, 0, SETVAL, 0);
-
-    // semaphore 2 for Scheduler
-    key = ftok("master.c", 5);
-    int semid2 = semget(key, 1, IPC_CREAT | 0666);
-    semctl(semid2, 0, SETVAL, 0);
-
-    // semaphore 3 for Memory Management Unit
-    key = ftok("master.c", 6);
-    int semid3 = semget(key, 1, IPC_CREAT | 0666);
-    semctl(semid3, 0, SETVAL, 0);
 
     // semaphore 4 for Master
     key = ftok("master.c", 7);
@@ -280,9 +266,6 @@ int main()
     shmctl(shmid3, IPC_RMID, NULL);
 
     // remove semaphores
-    semctl(semid1, 0, IPC_RMID, 0);
-    semctl(semid2, 0, IPC_RMID, 0);
-    semctl(semid3, 0, IPC_RMID, 0);
     semctl(semid4, 0, IPC_RMID, 0);
 
     // remove message queues

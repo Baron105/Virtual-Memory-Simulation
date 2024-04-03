@@ -108,6 +108,8 @@ int main(int argc, char *argv[])
         {
             printf("Process %d: ", pid);
             printf("Illegal Page Number\nTerminating\n");
+            // delete the semaphore
+            semctl(semaphoreid, 0, IPC_RMID);
             exit(1);
         }
         else if (msg3.pageorframe == -1)
