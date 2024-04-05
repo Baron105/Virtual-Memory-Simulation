@@ -50,10 +50,10 @@ int main(int argc, char *argv[])
     printf("%s   pid=%d\n", refstr,getpid());
 
     key_t key = ftok("master.c", 4);
-    int semid = semget(key, 1, IPC_CREAT | 0666);
+    // int semid = semget(key, 1, IPC_CREAT | 0666);
 
-    key = ftok("master.c", 6);
-    int semid3 = semget(key, 1, IPC_CREAT | 0666);
+    // key = ftok("master.c", 6);
+    // int semid3 = semget(key, 1, IPC_CREAT | 0666);
 
     // generate a random key for the process
     key = ftok("process.c", getpid() % 255);

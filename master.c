@@ -36,7 +36,7 @@ typedef struct SM1
     int pid;         // process id
     int mi;          // number of required pages
     int fi;          // number of frames allocated
-    int pagetable[50000][3]; // page table
+    int pagetable[5000][3]; // page table
     int totalpagefaults;
     int totalillegalaccess;
 } SM1;
@@ -55,7 +55,7 @@ int main()
     // printf("Enter the Physical Address Space size: ");
     // scanf("%d", &f);
 
-    k=4;m=7;f=10;
+    k=100;m=1;f=1;
 
     // page table for k processes
     key_t key = ftok("master.c", 1);

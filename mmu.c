@@ -19,7 +19,7 @@ typedef struct SM1
     int pid;         // process id
     int mi;          // number of required pages
     int fi;          // number of frames allocated
-    int pagetable[50000][3]; // page table
+    int pagetable[5000][3]; // page table
     int totalpagefaults;
     int totalillegalaccess;
 } SM1;
@@ -148,10 +148,6 @@ int main(int argc, char *argv[])
             // page fault
             // ask process to wait
             printf("Page fault sequence - (Process %d, Page %d)\n", i + 1, page);
-            msg3.pageorframe = -1;
-            msg3.type = 4;
-            msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
-
 
             // Page Fault Handler (PFH)
             // check if there is a free frame in sm2
@@ -180,6 +176,27 @@ int main(int argc, char *argv[])
                         minpage = k;
                     }
                 }
+                if (minpage == -1)
+                {
+                    // process has no frames and no free frames
+                    // ask process to kill themselves
+                    msg3.pageorframe = -2;
+                    msg3.type = 4;
+                    msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
+
+                    // usleep(25000);
+
+                    // ask scheduler to schedule another process
+                    msg2.type = 2;
+                    msg2.pid = msg3.pid;
+                    msg2.semid = msg3.semid;
+                    msgsnd(msgid2, (void *)&msg2, sizeof(message2), 0);
+                    continue;
+                }
+
+                msg3.pageorframe = -1;
+                msg3.type = 4;
+                msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
 
                 
                 sm1[i].pagetable[minpage][1] = 0;
@@ -197,6 +214,10 @@ int main(int argc, char *argv[])
 
             else
             {
+                msg3.pageorframe = -1;
+                msg3.type = 4;
+                msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
+
                 // free frame found
                 sm1[i].pagetable[page][0] = j;
                 sm1[i].pagetable[page][1] = 1;

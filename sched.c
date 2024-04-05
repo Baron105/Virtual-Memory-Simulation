@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     int k = atoi(argv[3]);
 
     key_t key = ftok("master.c", 4);
-    int semid = semget(key, 1, IPC_CREAT | 0666);
+    // int semid = semget(key, 1, IPC_CREAT | 0666);
 
     key = ftok("master.c", 7);
     int semid4 = semget(key, 1, IPC_CREAT | 0666);
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     while (k > 0)
     {
         // wait for processes to come
-        // usleep(2500);
+        usleep(2500);
         msgrcv(msgid1, (void *)&msg1, sizeof(message1), 0, 0);
 
         printf("\t\tScheduling process %d\n", msg1.pid);
