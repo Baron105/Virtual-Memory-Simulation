@@ -13,6 +13,8 @@
 #define P(s) semop(s, &pop, 1)
 #define V(s) semop(s, &vop, 1)
 
+
+
 typedef struct message1
 {
     long type;
@@ -59,10 +61,10 @@ int main(int argc, char *argv[])
         // usleep(2500);
         msgrcv(msgid1, (void *)&msg1, sizeof(message1), 0, 0);
 
-        printf("\t\tScheduling process %d\n", msg1.pid);
+        // printf("\t\tScheduling process %d\n", msg1.pid);
 
         // signal process to start
-        printf("\t\t secheduler signaling process %d and semid = %d\n", msg1.pid, msg1.semid);
+        // printf("\t\t secheduler signaling process %d and semid = %d\n", msg1.pid, msg1.semid);
         V(msg1.semid);
 
         // wait for mmu
@@ -71,12 +73,12 @@ int main(int argc, char *argv[])
         // check the type of message
         if (msg2.type == 2)
         {
-            printf("\t\tProcess %d terminated\n", msg2.pid);
+            // printf("\t\tProcess %d terminated\n", msg2.pid);
             k--;
         }
         else if (msg2.type == 1)
         {
-            printf("\t\tProcess %d added to end of queue\n", msg2.pid);
+            // printf("\t\tProcess %d added to end of queue\n", msg2.pid);
             msg1.pid = msg2.pid;
             msg1.semid = msg2.semid;
             msg1.type = 1;
@@ -84,7 +86,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("\t\tScheduler terminated\n");
+    printf("\t\tScheduler terminating\n");
 
     // signal master on semid4
     V(semid4);

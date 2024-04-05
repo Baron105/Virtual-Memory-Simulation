@@ -14,6 +14,15 @@
 #define P(s) semop(s, &pop, 1)
 #define V(s) semop(s, &vop, 1)
 
+void sighand(int signum)
+{
+    if(signum == SIGINT)
+    {
+        printf("\t\t MMU terminating..\n");
+        exit(1);
+    }
+}
+
 typedef struct SM1
 {
     int pid;         // process id
@@ -42,6 +51,7 @@ typedef struct message3
 
 int main(int argc, char *argv[])
 {
+    signal(SIGINT, sighand);
     int timestamp = 0;
 
     struct sembuf pop = {0, -1, 0};
@@ -205,7 +215,7 @@ int main(int argc, char *argv[])
                 msg2.type = 1;
                 msg2.pid = msg3.pid;
                 msg2.semid = msg3.semid;
-                printf("\t\t\t MMU added msg2.type = 1, msg2.pid = %d msg2.semid=%d\n", msg2.pid,msg2.semid);
+                // printf("\t\t\t MMU added msg2.type = 1, msg2.pid = %d msg2.semid=%d\n", msg2.pid,msg2.semid);
                 msgsnd(msgid2, (void *)&msg2, sizeof(message2), 0);
             }
         }

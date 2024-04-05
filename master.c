@@ -48,14 +48,14 @@ int main()
     struct sembuf vop = {0, 1, 0};
 
     int k, m, f;
-    // printf("Enter the number of processes: ");
-    // scanf("%d", &k);
-    // printf("Enter the Virtual Address Space size: ");
-    // scanf("%d", &m);
-    // printf("Enter the Physical Address Space size: ");
-    // scanf("%d", &f);
+    printf("Enter the number of processes: ");
+    scanf("%d", &k);
+    printf("Enter the Virtual Address Space size: ");
+    scanf("%d", &m);
+    printf("Enter the Physical Address Space size: ");
+    scanf("%d", &f);
 
-    k=4;m=7;f=10;
+    // k=4;m=7;f=10;
 
     // page table for k processes
     key_t key = ftok("master.c", 1);
@@ -226,8 +226,8 @@ int main()
         if (pid != 0)
         {
             sm1[i].pid = pid;
-            printf("Process %d created :: mi = %d\n", pid, sm1[i].mi);
-            printf("Reference String[%d] = %s\n", i, refstr[i]);
+            printf("Process[%d] with pid= %d created :: mi = %d\n",i+1, pid, sm1[i].mi);
+            printf("Reference String[%d] = %s\n", i+1, refstr[i]);
             printf("\n");
         }
         else
