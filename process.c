@@ -31,7 +31,7 @@ typedef struct message3
 int main(int argc, char *argv[])
 {
     printf("Process has started\n");
-    
+
     struct sembuf pop = {0, -1, 0};
     struct sembuf vop = {0, 1, 0};
 
@@ -41,13 +41,12 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-
     int msgid1 = atoi(argv[2]);
     int msgid3 = atoi(argv[3]);
 
     char refstr[100000] = {'\0'};
     strcpy(refstr, argv[1]);
-    printf("%s   pid=%d\n", refstr,getpid());
+    printf("%s   pid=%d\n", refstr, getpid());
 
     key_t key = ftok("master.c", 4);
     // int semid = semget(key, 1, IPC_CREAT | 0666);
@@ -58,7 +57,6 @@ int main(int argc, char *argv[])
     // generate a random key for the process
     key = ftok("process.c", getpid() % 255);
     int semaphoreid = semget(key, 1, IPC_CREAT | 0666);
-    
 
     int pid = getpid();
 
@@ -118,7 +116,7 @@ int main(int argc, char *argv[])
             printf("Page Fault\nWaiting for page to be loaded\n");
             // wait for the page to be loaded
             // scheduler will signal when the page is loaded
-            i=x;
+            i = x;
             P(semaphoreid);
             continue;
         }
@@ -142,7 +140,7 @@ int main(int argc, char *argv[])
     printf("Terminating\n");
 
     // delete the semaphore
-    semctl(semaphoreid, 0, IPC_RMID);   
+    semctl(semaphoreid, 0, IPC_RMID);
 
     return 0;
 }

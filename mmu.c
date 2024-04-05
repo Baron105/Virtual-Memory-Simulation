@@ -16,9 +16,9 @@
 
 typedef struct SM1
 {
-    int pid;         // process id
-    int mi;          // number of required pages
-    int fi;          // number of frames allocated
+    int pid;                // process id
+    int mi;                 // number of required pages
+    int fi;                 // number of frames allocated
     int pagetable[5000][3]; // page table
     int totalpagefaults;
     int totalillegalaccess;
@@ -37,8 +37,6 @@ typedef struct message3
     int pid;
     int semid;
 } message3;
-
-
 
 int main(int argc, char *argv[])
 {
@@ -61,8 +59,6 @@ int main(int argc, char *argv[])
     message2 msg2;
     message3 msg3;
 
-    
-
     SM1 *sm1 = (SM1 *)shmat(shmid1, NULL, 0);
     int *sm2 = (int *)shmat(shmid2, NULL, 0);
 
@@ -75,7 +71,6 @@ int main(int argc, char *argv[])
         msgrcv(msgid3, (void *)&msg3, sizeof(message3), 3, 0);
         timestamp++;
 
-
         printf("Global Ordering - (Timestamp %d, Process %d, Page %d)\n", timestamp, msg3.pid, msg3.pageorframe);
         // V(semid3);
         // check if the requested page is in the page table of the process with that pid
@@ -86,7 +81,7 @@ int main(int argc, char *argv[])
         }
 
         int page = msg3.pageorframe;
-        if(page == -9)
+        if (page == -9)
         {
             // process is done
             // free the frames
@@ -106,7 +101,7 @@ int main(int argc, char *argv[])
 
             msgsnd(msgid2, (void *)&msg2, sizeof(message2), 0);
         }
-        else if((sm1[i].pagetable[page][0] != -1) && (sm1[i].pagetable[page][1] == 1))
+        else if ((sm1[i].pagetable[page][0] != -1) && (sm1[i].pagetable[page][1] == 1))
         {
             // page there in memory and valid, return frame number
             sm1[i].pagetable[page][2] = timestamp;
@@ -114,7 +109,7 @@ int main(int argc, char *argv[])
             msg3.type = 4;
             msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
         }
-        else if(page >= sm1[i].mi)
+        else if (page >= sm1[i].mi)
         {
             // illegal page number
             // ask process to kill themselves
@@ -140,7 +135,7 @@ int main(int argc, char *argv[])
             }
             msg2.type = 2;
             msg2.pid = msg3.pid;
-            msg2.semid = msg3.semid;    
+            msg2.semid = msg3.semid;
             msgsnd(msgid2, (void *)&msg2, sizeof(message2), 0);
         }
         else
@@ -198,13 +193,11 @@ int main(int argc, char *argv[])
                 msg3.type = 4;
                 msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
 
-                
                 sm1[i].pagetable[minpage][1] = 0;
                 sm1[i].pagetable[page][0] = sm1[i].pagetable[minpage][0];
                 sm1[i].pagetable[page][1] = 1;
                 sm1[i].pagetable[page][2] = timestamp;
                 sm1[i].pagetable[minpage][2] = INT_MAX;
-
 
                 msg2.type = 1;
                 msg2.pid = msg3.pid;
@@ -226,7 +219,7 @@ int main(int argc, char *argv[])
                 msg2.type = 1;
                 msg2.pid = msg3.pid;
                 msg2.semid = msg3.semid;
-                printf("\t\t\t MMU added msg2.type = 1, msg2.pid = %d msg2.semid=%d\n", msg2.pid,msg2.semid);
+                printf("\t\t\t MMU added msg2.type = 1, msg2.pid = %d msg2.semid=%d\n", msg2.pid, msg2.semid);
                 msgsnd(msgid2, (void *)&msg2, sizeof(message2), 0);
             }
         }

@@ -22,20 +22,20 @@ int pidmmu;
 
 void sighand(int signum)
 {
-    if(signum == SIGINT)
+    if (signum == SIGINT)
     {
         // kill scheduler,mmu and all the processes
-        kill(pidscheduler,SIGINT);
-        kill(pidmmu,SIGINT);
+        kill(pidscheduler, SIGINT);
+        kill(pidmmu, SIGINT);
         exit(1);
     }
 }
 
 typedef struct SM1
 {
-    int pid;         // process id
-    int mi;          // number of required pages
-    int fi;          // number of frames allocated
+    int pid;                // process id
+    int mi;                 // number of required pages
+    int fi;                 // number of frames allocated
     int pagetable[5000][3]; // page table
     int totalpagefaults;
     int totalillegalaccess;
@@ -55,7 +55,9 @@ int main()
     // printf("Enter the Physical Address Space size: ");
     // scanf("%d", &f);
 
-    k=100;m=1;f=1;
+    k = 100;
+    m = 1;
+    f = 1;
 
     // page table for k processes
     key_t key = ftok("master.c", 1);
@@ -63,8 +65,7 @@ int main()
     shmctl(shmid1, IPC_RMID, NULL);
     shmid1 = shmget(key, k * sizeof(SM1), IPC_CREAT | 0666);
     SM1 *sm1 = (SM1 *)shmat(shmid1, NULL, 0);
-    void * t = (void *)sm1;
-
+    void *t = (void *)sm1;
 
     // check if shared memory is attached
     if (t == (void *)-1)
@@ -72,7 +73,6 @@ int main()
         perror("shmat");
         exit(1);
     }
-
 
     for (int i = 0; i < k; i++)
     {
@@ -104,7 +104,6 @@ int main()
     {
         sm3[i] = 0;
     }
-
 
     // semaphore 4 for Master
     key = ftok("master.c", 7);
@@ -178,7 +177,6 @@ int main()
 
         int y = 0;
         int x = rand() % (8 * sm1[i].mi + 1) + 2 * sm1[i].mi;
-
 
         // refi[i] = (int *)malloc((x + 1) * sizeof(int));
 
