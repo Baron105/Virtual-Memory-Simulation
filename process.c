@@ -30,7 +30,7 @@ typedef struct message3
 
 int main(int argc, char *argv[])
 {
-    printf("Process has started\n");
+    // printf("Process has started\n");
 
     struct sembuf pop = {0, -1, 0};
     struct sembuf vop = {0, 1, 0};
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
     char refstr[100000] = {'\0'};
     strcpy(refstr, argv[1]);
-    printf("%s   pid=%d\n", refstr, getpid());
+    // printf("%s   pid=%d\n", refstr, getpid());
 
     key_t key = ftok("master.c", 4);
     // int semid = semget(key, 1, IPC_CREAT | 0666);
@@ -69,9 +69,9 @@ int main(int argc, char *argv[])
     msgsnd(msgid1, (void *)&msg1, sizeof(message1), 0);
 
     // wait till scheduler signals to start
-    printf("pid = %d\n", pid);
+    // printf("pid = %d\n", pid);
     P(semaphoreid);
-    printf("Process %d: Started with semaphore id =%d\n", pid, semaphoreid);
+    // printf("Process %d: Started with semaphore id =%d\n", pid, semaphoreid);
 
     // send the reference string to the scheduler, one character at a time
     int i = 0;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
             i++;
         }
         j = atoi(temp);
-        printf("process id = %d, page number = %d\n", pid, j);
+        // printf("process id = %d, page number = %d\n", pid, j);
         i++;
         msg3.pageorframe = j;
         msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
         }
         else if (msg3.pageorframe == -1)
         {
-            printf("Process %d: ", pid);
-            printf("Page Fault\nWaiting for page to be loaded\n");
+            // printf("Process %d: ", pid);
+            // printf("Page Fault\nWaiting for page to be loaded\n");
             // wait for the page to be loaded
             // scheduler will signal when the page is loaded
             i = x;
@@ -122,8 +122,8 @@ int main(int argc, char *argv[])
         }
         else
         {
-            printf("Process %d: ", pid);
-            printf("Frame %d allocated\n", msg3.pageorframe);
+            // printf("Process %d: ", pid);
+            // printf("Frame %d allocated\n", msg3.pageorframe);
         }
     }
 
