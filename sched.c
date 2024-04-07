@@ -88,8 +88,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("\t\tScheduler terminated\n");
-
     // signal master on semid4
     V(semid4);
 

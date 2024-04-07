@@ -15,7 +15,7 @@
 #define P(s) semop(s, &pop, 1)
 #define V(s) semop(s, &vop, 1)
 
-int shmid1,shmid2;
+int shmid1, shmid2;
 
 typedef struct SM1
 {
@@ -43,23 +43,29 @@ typedef struct message3
 
 void sighand(int signum)
 {
-    if(signum == SIGINT)
+    if (signum == SIGINT)
     {
         // printf("Caught");
         // print the per process stats
         SM1 *sm1 = (SM1 *)shmat(shmid1, NULL, 0);
         char buffer[1000] = {'\0'};
-        int i=0;
-        int fd = open("result.txt", O_CREAT|O_WRONLY|O_APPEND,0777);
-        while(sm1[i].pid!=-5)
+        int i = 0;
+        int fd = open("result.txt", O_CREAT | O_WRONLY | O_APPEND, 0777);
+        printf("\nFinal Statistics for Processes\n");
+        snprintf(buffer, sizeof(buffer), "\nFinal Statistics for Processes\n");
+        write(fd, buffer, strlen(buffer));
+        memset(buffer, '\0', sizeof(buffer));
+
+        while (sm1[i].pid != -5)
         {
-            printf("Process %d, Pid: %d\nNumber of page faults = %d\nNumber of invalid page reference = %d\n\n\n",i+1,sm1[i].pid,sm1[i].totalpagefaults,sm1[i].totalillegalaccess);
-            snprintf(buffer,sizeof(buffer),"Process %d, Pid: %d\nNumber of page faults = %d\nNumber of invalid page reference = %d\n\n\n",i+1,sm1[i].pid,sm1[i].totalpagefaults,sm1[i].totalillegalaccess);
-            write(fd,buffer,strlen(buffer));
-            memset(buffer,'\0',sizeof(buffer));
+            printf("Process %d, Pid: %d\nNumber of page faults = %d\nNumber of invalid page reference = %d\n\n\n", i + 1, sm1[i].pid, sm1[i].totalpagefaults, sm1[i].totalillegalaccess);
+            snprintf(buffer, sizeof(buffer), "Process %d, Pid: %d\nNumber of page faults = %d\nNumber of invalid page reference = %d\n\n\n", i + 1, sm1[i].pid, sm1[i].totalpagefaults, sm1[i].totalillegalaccess);
+            write(fd, buffer, strlen(buffer));
+            memset(buffer, '\0', sizeof(buffer));
             i++;
         }
         // fflush(stdout);
+        printf("The results are also stored in result.txt\n");
         printf("This window will be open for 30 secs\n");
         sleep(30);
         exit(0);
@@ -68,14 +74,12 @@ void sighand(int signum)
 
 int main(int argc, char *argv[])
 {
-    signal(SIGINT,sighand);
+    signal(SIGINT, sighand);
     int timestamp = 0;
 
     struct sembuf pop = {0, -1, 0};
     struct sembuf vop = {0, 1, 0};
-    int fd = open("result.txt", O_CREAT|O_WRONLY|O_TRUNC,0777);
-
-    
+    int fd = open("result.txt", O_CREAT | O_WRONLY | O_TRUNC, 0777);
 
     if (argc != 5)
     {
@@ -91,9 +95,9 @@ int main(int argc, char *argv[])
     message2 msg2;
     message3 msg3;
 
-    msg2.type = 5 ;
+    msg2.type = 5;
     msg2.pid = getpid();
-    msgsnd(msgid2,(void *)&msg2,sizeof(message2),0);
+    msgsnd(msgid2, (void *)&msg2, sizeof(message2), 0);
 
     SM1 *sm1 = (SM1 *)shmat(shmid1, NULL, 0);
     int *sm2 = (int *)shmat(shmid2, NULL, 0);
@@ -109,8 +113,8 @@ int main(int argc, char *argv[])
 
         printf("Global Ordering - (Timestamp %d, Process %d, Page %d)\n", timestamp, msg3.pid, msg3.pageorframe);
         snprintf(buffer, sizeof(buffer), "Global Ordering - (Timestamp %d, Process %d, Page %d)\n", timestamp, msg3.pid, msg3.pageorframe);
-        write(fd,buffer,strlen(buffer));
-        memset(buffer,'\0',sizeof(buffer));
+        write(fd, buffer, strlen(buffer));
+        memset(buffer, '\0', sizeof(buffer));
         // V(semid3);
         // check if the requested page is in the page table of the process with that pid
         int i = 0;
@@ -159,10 +163,10 @@ int main(int argc, char *argv[])
             // update total illegal access
             sm1[i].totalillegalaccess++;
 
-            printf("Invalid Page Reference - (Process %d, Page %d)\n", i + 1, page);
-            snprintf(buffer, sizeof(buffer), "Invalid Page Reference - (Process %d, Page %d)\n", i + 1, page);
-            write(fd,buffer,strlen(buffer));
-            memset(buffer,'\0',sizeof(buffer));
+            printf("\t\tInvalid Page Reference - (Process %d, Page %d)\n", msg3.pid, page);
+            snprintf(buffer, sizeof(buffer), "\t\tInvalid Page Reference - (Process %d, Page %d)\n", msg3.pid, page);
+            write(fd, buffer, strlen(buffer));
+            memset(buffer, '\0', sizeof(buffer));
 
             // free the frames
             for (int j = 0; j < sm1[i].mi; j++)
@@ -184,11 +188,6 @@ int main(int argc, char *argv[])
         {
             // page fault
             // ask process to wait
-            printf("Page fault sequence - (Process %d, Page %d)\n", i + 1, page);
-            snprintf(buffer, sizeof(buffer), "Page fault sequence - (Process %d, Page %d)\n", i + 1, page);
-            write(fd,buffer,strlen(buffer));
-            memset(buffer,'\0',sizeof(buffer));
-            sm1[i].totalpagefaults++;
 
             // Page Fault Handler (PFH)
             // check if there is a free frame in sm2
@@ -219,6 +218,14 @@ int main(int argc, char *argv[])
                 }
                 if (minpage == -1)
                 {
+                    // update total illegal access
+                    sm1[i].totalillegalaccess++;
+
+                    printf("\t\tInvalid Page Reference - (Process %d, Page %d)\n", msg3.pid, page);
+                    snprintf(buffer, sizeof(buffer), "\t\tInvalid Page Reference - (Process %d, Page %d)\n", msg3.pid, page);
+                    write(fd, buffer, strlen(buffer));
+                    memset(buffer, '\0', sizeof(buffer));
+
                     // process has no frames and no free frames
                     // ask process to kill themselves
                     msg3.pageorframe = -2;
@@ -234,6 +241,12 @@ int main(int argc, char *argv[])
                     msgsnd(msgid2, (void *)&msg2, sizeof(message2), 0);
                     continue;
                 }
+
+                printf("\tPage fault sequence - (Process %d, Page %d)\n", msg3.pid, page);
+                snprintf(buffer, sizeof(buffer), "\tPage fault sequence - (Process %d, Page %d)\n", msg3.pid, page);
+                write(fd, buffer, strlen(buffer));
+                memset(buffer, '\0', sizeof(buffer));
+                sm1[i].totalpagefaults++;
 
                 msg3.pageorframe = -1;
                 msg3.type = 4;
@@ -253,6 +266,12 @@ int main(int argc, char *argv[])
 
             else
             {
+                printf("\tPage fault sequence - (Process %d, Page %d)\n", msg3.pid, page);
+                snprintf(buffer, sizeof(buffer), "\tPage fault sequence - (Process %d, Page %d)\n", msg3.pid, page);
+                write(fd, buffer, strlen(buffer));
+                memset(buffer, '\0', sizeof(buffer));
+                sm1[i].totalpagefaults++;
+
                 msg3.pageorframe = -1;
                 msg3.type = 4;
                 msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);

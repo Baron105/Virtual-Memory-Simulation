@@ -182,8 +182,8 @@ int main()
     pidmmu = fork();
     if (pidmmu == 0)
     {
-        execlp("xterm", "xterm", "-T", "Memory Management Unit", "-e", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
-        // execlp("./mmu", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
+        // execlp("xterm", "xterm", "-T", "Memory Management Unit", "-e", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
+        execlp("./mmu", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
     }
     
     message2 msg2;
@@ -252,6 +252,8 @@ int main()
         }
     }
 
+    printf("\n");
+
     // create Processes
     for (int i = 0; i < k; i++)
     {
@@ -259,7 +261,7 @@ int main()
         if (pid != 0)
         {
             sm1[i].pid = pid;
-            printf("Process %d created :: mi = %d\n", pid, sm1[i].mi);
+            printf("Process %d created::mi = %d\n", pid, sm1[i].mi);
             printf("Reference String[%d] = %s\n", i, refstr[i]);
             printf("\n");
         }
@@ -281,12 +283,15 @@ int main()
     P(semid4);
 
     // terminate Memory Management Unit
-    int x = kill(pidmmu, SIGINT);
+    kill(pidmmu, SIGINT);
     waitpid(pidmmu,NULL,0);
+    printf("\nMMU terminated\n");
 
     // sleep(15);
     // terminate Scheduler
     kill(pidscheduler, SIGINT);
+    waitpid(pidscheduler,NULL,0);
+    printf("Scheduler terminated\n");
 
     // detach and remove shared memory
     // shmdt(sm1);
@@ -305,6 +310,8 @@ int main()
     msgctl(msgid1, IPC_RMID, NULL);
     msgctl(msgid2, IPC_RMID, NULL);
     msgctl(msgid3, IPC_RMID, NULL);
+
+    printf("Shared Memory Deleted\nMaster Terminating\n");
 
     return 0;
 }

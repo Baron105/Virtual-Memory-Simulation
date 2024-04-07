@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
         if (msg3.pageorframe == -2)
         {
             printf("Process %d: ", pid);
-            printf("Illegal Page Number\nTerminating\n");
+            printf("Invalid Page Number, Terminating\n");
             // delete the semaphore
             semctl(semaphoreid, 0, IPC_RMID);
             exit(1);
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 
     // send the termination signal to the mmu
     printf("Process %d: ", pid);
-    printf("Got all frames properly\n");
+    printf("Got all frames properly");
     message3 msg3;
     msg3.type = 3;
     msg3.pid = pid;
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
     msg3.semid = semaphoreid;
 
     msgsnd(msgid3, (void *)&msg3, sizeof(message3), 0);
-    printf("Terminating\n");
+    printf(", Terminating\n");
 
     // delete the semaphore
     semctl(semaphoreid, 0, IPC_RMID);
