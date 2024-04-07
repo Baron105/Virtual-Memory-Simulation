@@ -60,7 +60,6 @@ typedef struct message2
     int semid;
 } message2;
 
-
 typedef struct SM1
 {
     int pid;                // process id
@@ -73,7 +72,7 @@ typedef struct SM1
 
 int main()
 {
-    signal(SIGINT,sighand);
+    signal(SIGINT, sighand);
     srand(time(0));
     struct sembuf pop = {0, -1, 0};
     struct sembuf vop = {0, 1, 0};
@@ -88,7 +87,7 @@ int main()
 
     // page table for k processes
     key_t key = ftok("master.c", 1);
-    shmid1 = shmget(key, (k+1) * sizeof(SM1), IPC_CREAT | 0666);
+    shmid1 = shmget(key, (k + 1) * sizeof(SM1), IPC_CREAT | 0666);
     SM1 *sm1 = (SM1 *)shmat(shmid1, NULL, 0);
 
     for (int i = 0; i < k; i++)
@@ -182,15 +181,14 @@ int main()
     pidmmu = fork();
     if (pidmmu == 0)
     {
-        // execlp("xterm", "xterm", "-T", "Memory Management Unit", "-e", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
-        execlp("./mmu", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
+        execlp("xterm", "xterm", "-T", "Memory Management Unit", "-e", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
+        // execlp("./mmu", "./mmu", msgid2str, msgid3str, shmid1str, shmid2str, NULL);
     }
-    
+
     message2 msg2;
-    msgrcv(msgid2,(void *)&msg2,sizeof(message2),5,0);
+    msgrcv(msgid2, (void *)&msg2, sizeof(message2), 5, 0);
 
     pidmmu = msg2.pid;
-
 
     // sleep(10);
 
@@ -284,13 +282,13 @@ int main()
 
     // terminate Memory Management Unit
     kill(pidmmu, SIGINT);
-    waitpid(pidmmu,NULL,0);
+    waitpid(pidmmu, NULL, 0);
     printf("\nMMU terminated\n");
 
     // sleep(15);
     // terminate Scheduler
     kill(pidscheduler, SIGINT);
-    waitpid(pidscheduler,NULL,0);
+    waitpid(pidscheduler, NULL, 0);
     printf("Scheduler terminated\n");
 
     // detach and remove shared memory
